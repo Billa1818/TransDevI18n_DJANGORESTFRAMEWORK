@@ -1,0 +1,822 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-17 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Authentication and users
+msgid "Username"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "First name"
+msgstr ""
+
+msgid "Last name"
+msgstr ""
+
+msgid "Login"
+msgstr ""
+
+msgid "Logout"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "Sign up"
+msgstr ""
+
+msgid "Sign in"
+msgstr ""
+
+msgid "Forgot password?"
+msgstr ""
+
+msgid "Reset password"
+msgstr ""
+
+msgid "Change password"
+msgstr ""
+
+msgid "Current password"
+msgstr ""
+
+msgid "New password"
+msgstr ""
+
+msgid "Confirm password"
+msgstr ""
+
+msgid "Profile"
+msgstr ""
+
+msgid "Account settings"
+msgstr ""
+
+msgid "User profile"
+msgstr ""
+
+msgid "Personal information"
+msgstr ""
+
+# Navigation and interface
+msgid "Home"
+msgstr ""
+
+msgid "Dashboard"
+msgstr ""
+
+msgid "Menu"
+msgstr ""
+
+msgid "Navigation"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Sort"
+msgstr ""
+
+msgid "Sort by"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Submit"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Continue"
+msgstr ""
+
+msgid "Finish"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Show"
+msgstr ""
+
+msgid "Hide"
+msgstr ""
+
+msgid "Expand"
+msgstr ""
+
+msgid "Collapse"
+msgstr ""
+
+# Status and states
+msgid "Active"
+msgstr ""
+
+msgid "Inactive"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Published"
+msgstr ""
+
+msgid "Draft"
+msgstr ""
+
+msgid "Pending"
+msgstr ""
+
+msgid "Approved"
+msgstr ""
+
+msgid "Rejected"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "In progress"
+msgstr ""
+
+msgid "Available"
+msgstr ""
+
+msgid "Unavailable"
+msgstr ""
+
+msgid "Online"
+msgstr ""
+
+msgid "Offline"
+msgstr ""
+
+# Messages and notifications
+msgid "Success"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Warning"
+msgstr ""
+
+msgid "Info"
+msgstr ""
+
+msgid "Message"
+msgstr ""
+
+msgid "Notification"
+msgstr ""
+
+msgid "Alert"
+msgstr ""
+
+msgid "Confirmation"
+msgstr ""
+
+msgid "Are you sure?"
+msgstr ""
+
+msgid "This action cannot be undone."
+msgstr ""
+
+msgid "Operation completed successfully."
+msgstr ""
+
+msgid "An error occurred while processing your request."
+msgstr ""
+
+msgid "Please check your input and try again."
+msgstr ""
+
+msgid "Required field"
+msgstr ""
+
+msgid "Invalid input"
+msgstr ""
+
+msgid "Field is required"
+msgstr ""
+
+msgid "Please enter a valid email address"
+msgstr ""
+
+msgid "Password must be at least 8 characters long"
+msgstr ""
+
+msgid "Passwords do not match"
+msgstr ""
+
+# Content and data
+msgid "Title"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Content"
+msgstr ""
+
+msgid "Category"
+msgstr ""
+
+msgid "Tag"
+msgstr ""
+
+msgid "Tags"
+msgstr ""
+
+msgid "Author"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Modified"
+msgstr ""
+
+msgid "Published on"
+msgstr ""
+
+msgid "Updated on"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Image"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "Upload"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "Country"
+msgstr ""
+
+msgid "City"
+msgstr ""
+
+msgid "Address"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "Website"
+msgstr ""
+
+msgid "URL"
+msgstr ""
+
+msgid "Link"
+msgstr ""
+
+# Pagination and lists
+msgid "Results"
+msgstr ""
+
+msgid "No results found"
+msgstr ""
+
+msgid "Showing results"
+msgstr ""
+
+msgid "of"
+msgstr ""
+
+msgid "Page"
+msgstr ""
+
+msgid "First"
+msgstr ""
+
+msgid "Last"
+msgstr ""
+
+msgid "Items per page"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "None"
+msgstr ""
+
+msgid "Select all"
+msgstr ""
+
+msgid "Deselect all"
+msgstr ""
+
+msgid "Selected"
+msgstr ""
+
+msgid "Unselected"
+msgstr ""
+
+# Time and dates
+msgid "Today"
+msgstr ""
+
+msgid "Yesterday"
+msgstr ""
+
+msgid "Tomorrow"
+msgstr ""
+
+msgid "This week"
+msgstr ""
+
+msgid "This month"
+msgstr ""
+
+msgid "This year"
+msgstr ""
+
+msgid "Last week"
+msgstr ""
+
+msgid "Last month"
+msgstr ""
+
+msgid "Last year"
+msgstr ""
+
+msgid "Next week"
+msgstr ""
+
+msgid "Next month"
+msgstr ""
+
+msgid "Next year"
+msgstr ""
+
+msgid "January"
+msgstr ""
+
+msgid "February"
+msgstr ""
+
+msgid "March"
+msgstr ""
+
+msgid "April"
+msgstr ""
+
+msgid "May"
+msgstr ""
+
+msgid "June"
+msgstr ""
+
+msgid "July"
+msgstr ""
+
+msgid "August"
+msgstr ""
+
+msgid "September"
+msgstr ""
+
+msgid "October"
+msgstr ""
+
+msgid "November"
+msgstr ""
+
+msgid "December"
+msgstr ""
+
+msgid "Monday"
+msgstr ""
+
+msgid "Tuesday"
+msgstr ""
+
+msgid "Wednesday"
+msgstr ""
+
+msgid "Thursday"
+msgstr ""
+
+msgid "Friday"
+msgstr ""
+
+msgid "Saturday"
+msgstr ""
+
+msgid "Sunday"
+msgstr ""
+
+# Permissions and security
+msgid "Permission denied"
+msgstr ""
+
+msgid "Access denied"
+msgstr ""
+
+msgid "Unauthorized"
+msgstr ""
+
+msgid "Forbidden"
+msgstr ""
+
+msgid "You don't have permission to access this resource"
+msgstr ""
+
+msgid "Please login to continue"
+msgstr ""
+
+msgid "Session expired"
+msgstr ""
+
+msgid "Invalid credentials"
+msgstr ""
+
+msgid "Account locked"
+msgstr ""
+
+msgid "Too many failed attempts"
+msgstr ""
+
+# E-commerce and shopping
+msgid "Add to cart"
+msgstr ""
+
+msgid "Shopping cart"
+msgstr ""
+
+msgid "Checkout"
+msgstr ""
+
+msgid "Order"
+msgstr ""
+
+msgid "Product"
+msgstr ""
+
+msgid "Price"
+msgstr ""
+
+msgid "Quantity"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Subtotal"
+msgstr ""
+
+msgid "Tax"
+msgstr ""
+
+msgid "Shipping"
+msgstr ""
+
+msgid "Discount"
+msgstr ""
+
+msgid "Coupon"
+msgstr ""
+
+msgid "Payment"
+msgstr ""
+
+msgid "Credit card"
+msgstr ""
+
+msgid "Billing address"
+msgstr ""
+
+msgid "Shipping address"
+msgstr ""
+
+msgid "Order history"
+msgstr ""
+
+msgid "Track order"
+msgstr ""
+
+msgid "Wishlist"
+msgstr ""
+
+msgid "Favorites"
+msgstr ""
+
+msgid "Compare"
+msgstr ""
+
+msgid "Review"
+msgstr ""
+
+msgid "Rating"
+msgstr ""
+
+msgid "Stock"
+msgstr ""
+
+msgid "In stock"
+msgstr ""
+
+msgid "Out of stock"
+msgstr ""
+
+msgid "Limited stock"
+msgstr ""
+
+# Forms and validation
+msgid "Required"
+msgstr ""
+
+msgid "Optional"
+msgstr ""
+
+msgid "Please fill out this field"
+msgstr ""
+
+msgid "Invalid format"
+msgstr ""
+
+msgid "Too short"
+msgstr ""
+
+msgid "Too long"
+msgstr ""
+
+msgid "Invalid characters"
+msgstr ""
+
+msgid "Already exists"
+msgstr ""
+
+msgid "Not found"
+msgstr ""
+
+msgid "Minimum length"
+msgstr ""
+
+msgid "Maximum length"
+msgstr ""
+
+msgid "Choose file"
+msgstr ""
+
+msgid "No file chosen"
+msgstr ""
+
+msgid "File too large"
+msgstr ""
+
+msgid "Invalid file type"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Reset"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Reload"
+msgstr ""
+
+# Blog and content management
+msgid "Article"
+msgstr ""
+
+msgid "Blog"
+msgstr ""
+
+msgid "Post"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Reply"
+msgstr ""
+
+msgid "Like"
+msgstr ""
+
+msgid "Share"
+msgstr ""
+
+msgid "Bookmark"
+msgstr ""
+
+msgid "Subscribe"
+msgstr ""
+
+msgid "Unsubscribe"
+msgstr ""
+
+msgid "Newsletter"
+msgstr ""
+
+msgid "Archive"
+msgstr ""
+
+msgid "Recent posts"
+msgstr ""
+
+msgid "Popular posts"
+msgstr ""
+
+msgid "Related posts"
+msgstr ""
+
+msgid "Read more"
+msgstr ""
+
+msgid "Continue reading"
+msgstr ""
+
+msgid "Excerpt"
+msgstr ""
+
+msgid "Full article"
+msgstr ""
+
+msgid "Permalink"
+msgstr ""
+
+msgid "Category archive"
+msgstr ""
+
+msgid "Tag archive"
+msgstr ""
+
+msgid "Author archive"
+msgstr ""
+
+msgid "Date archive"
+msgstr ""
+
+# Contact and communication
+msgid "Contact"
+msgstr ""
+
+msgid "Contact us"
+msgstr ""
+
+msgid "Get in touch"
+msgstr ""
+
+msgid "Send message"
+msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "Your message"
+msgstr ""
+
+msgid "Reply to"
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "To"
+msgstr ""
+
+msgid "CC"
+msgstr ""
+
+msgid "BCC"
+msgstr ""
+
+msgid "Attachment"
+msgstr ""
+
+msgid "Send"
+msgstr ""
+
+msgid "Receive"
+msgstr ""
+
+msgid "Inbox"
+msgstr ""
+
+msgid "Sent"
+msgstr ""
+
+msgid "Drafts"
+msgstr ""
+
+msgid "Trash"
+msgstr ""
+
+msgid "Spam"
+msgstr ""
+
+msgid "Mark as read"
+msgstr ""
+
+msgid "Mark as unread"
+msgstr ""
+
+msgid "Archive message"
+msgstr ""
+
+msgid "Delete message"
+msgstr ""
+
+msgid "Forward"
+msgstr ""
+
+msgid "Reply all"
+msgstr ""
