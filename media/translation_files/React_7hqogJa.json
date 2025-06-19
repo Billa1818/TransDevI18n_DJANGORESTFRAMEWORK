@@ -1,0 +1,85 @@
+{
+  "@@locale": "en",
+  "@@context": "Translation messages for React application",
+  
+  "home.title": "Welcome to our platform",
+  "@home.title": {
+    "description": "Title on the homepage welcoming the user"
+  },
+
+  "home.subtitle": "Simplify your project management",
+  "@home.subtitle": {
+    "description": "Subtitle that explains the purpose of the platform"
+  },
+
+  "auth.login": "Login",
+  "@auth.login": {
+    "description": "Login button label"
+  },
+
+  "auth.logout": "Logout",
+  "@auth.logout": {
+    "description": "Logout button label"
+  },
+
+  "auth.register": "Register",
+  "@auth.register": {
+    "description": "Register button label"
+  },
+
+  "auth.email": "Email address",
+  "@auth.email": {
+    "description": "Label for email input"
+  },
+
+  "auth.password": "Password",
+  "@auth.password": {
+    "description": "Label for password input"
+  },
+
+  "auth.forgot_password": "Forgot your password?",
+  "@auth.forgot_password": {
+    "description": "Link to reset password"
+  },
+
+  "dashboard.welcome": "Welcome back",
+  "@dashboard.welcome": {
+    "description": "Message to welcome the user on the dashboard"
+  },
+
+  "dashboard.stats": "Your statistics",
+  "@dashboard.stats": {
+    "description": "Title above user statistics section"
+  },
+
+  "errors.404": "Page not found",
+  "@errors.404": {
+    "description": "Message shown when the user lands on a 404 page"
+  },
+
+  "errors.500": "Internal server error",
+  "@errors.500": {
+    "description": "Message shown when there is a server-side error"
+  },
+
+  "buttons.save": "Save",
+  "@buttons.save": {
+    "description": "Save button label"
+  },
+
+  "buttons.cancel": "Cancel",
+  "@buttons.cancel": {
+    "description": "Cancel button label"
+  },
+
+  "buttons.delete": "Delete",
+  "@buttons.delete": {
+    "description": "Delete button label"
+  },
+
+  "notifications.new_message": "You have a new message",
+  "@notifications.new_message": {
+    "description": "Notification for a new message received"
+  }
+}
+

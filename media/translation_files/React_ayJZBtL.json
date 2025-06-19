@@ -1,0 +1,19 @@
+{
+  "home.title": "Welcome to our platform",
+  "home.subtitle": "Simplify your project management",
+  "auth.login": "Login",
+  "auth.logout": "Logout",
+  "auth.register": "Register",
+  "auth.email": "Email address",
+  "auth.password": "Password",
+  "auth.forgot_password": "Forgot your password?",
+  "dashboard.welcome": "Welcome back",
+  "dashboard.stats": "Your statistics",
+  "errors.404": "Page not found",
+  "errors.500": "Internal server error",
+  "buttons.save": "Save",
+  "buttons.cancel": "Cancel",
+  "buttons.delete": "Delete",
+  "notifications.new_message": "You have a new message"
+}
+

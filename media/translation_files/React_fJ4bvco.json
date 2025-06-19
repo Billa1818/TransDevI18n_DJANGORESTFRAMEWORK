@@ -1,0 +1,25 @@
+{
+    "home": {
+        "title": "Bienvenue sur notre plateforme",
+        "subtitle": "Simplifiez la gestion de vos projets"
+    },
+    "auth": {
+        "login": "Connexion",
+        "logout": "Déconnexion",
+        "register": "Inscription",
+        "email": "Adresse e-mail",
+        "password": "Mot de passe",
+        "forgot_password": "Mot de passe oublié ?"
+    },
+    "dashboard": {
+        "welcome_user": "Bienvenue, {{name}} !",
+        "statistics": "Statistiques",
+        "settings": "Paramètres"
+    },
+    "common": {
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "close": "Fermer"
+    }
+}
+

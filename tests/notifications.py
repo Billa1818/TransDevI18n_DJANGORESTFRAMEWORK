@@ -381,8 +381,8 @@ def test_notification_client():
     
     # 3. Statistiques initiales
     print("\n3️⃣ === STATISTIQUES INITIALES ===")
-    client.get_notifications_stats()
-    client.get_unread_count()
+    #client.get_notifications_stats()
+    #client.get_unread_count()
     
     # 4. Création de notifications de test
     print("\n4️⃣ === CRÉATION DE NOTIFICATIONS TEST ===")

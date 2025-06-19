@@ -14,14 +14,6 @@ class TranslationFile(models.Model):
     FILE_TYPES = [
         ('po', 'PO File'),
         ('json', 'JSON File'),
-        ('php', 'PHP File'),
-        ('yaml', 'YAML File'),
-        ('yml', 'YML File'),
-        ('xml', 'XML File'),
-        ('arb', 'ARB File'),
-        ('properties', 'Properties File'),
-        ('csv', 'CSV File'),
-        ('ts', 'TypeScript File'),
     ]
     
     STATUS_CHOICES = [
