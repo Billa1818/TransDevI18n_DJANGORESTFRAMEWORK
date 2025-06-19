@@ -3,8 +3,8 @@
 # ============================================================================
 
 """
-Ojbets Celery pour le traitement asynchrone des fichiers de traduction.
-
+Objets Celery pour le traitement asynchrone des fichiers de traduction.
+Supporte uniquement les formats .po et .json avec détection automatique de framework.
 """
 
 from celery import shared_task
@@ -16,11 +16,298 @@ from django.core.exceptions import ObjectDoesNotExist
 import os
 import chardet
 import time
+import json
+import re
 from .models import TranslationFile
 from django.db import transaction
 from django.utils import timezone
 
 logger = get_task_logger(__name__)
+
+
+def detect_framework_from_content(file_path, file_type, encoding='utf-8'):
+    """
+    Détecte automatiquement le framework utilisé basé sur le contenu du fichier
+    """
+    try:
+        with open(file_path, 'r', encoding=encoding) as f:
+            content = f.read(5000)  # Lire les premiers 5KB pour l'analyse
+            
+        if file_type == 'po':
+            return detect_framework_from_po(content)
+        elif file_type == 'json':
+            return detect_framework_from_json(content)
+        else:
+            return 'unknown'
+            
+    except Exception as e:
+        logger.warning(f"Erreur lors de la détection de framework: {e}")
+        return 'unknown'
+
+
+def detect_framework_from_po(content):
+    """
+    Détecte le framework basé sur le contenu d'un fichier PO
+    """
+    # Patterns pour détecter différents frameworks
+    patterns = {
+        'django': [
+            r'#: .*\.py',
+            r'msgid "django"',
+            r'msgstr "Django"',
+            r'#: .*django.*',
+            r'Project-Id-Version: Django',
+            r'#: .*admin\.py',
+            r'#: .*models\.py',
+            r'#: .*views\.py',
+            r'#: .*forms\.py',
+            r'#: .*urls\.py',
+            r'#: .*settings\.py',
+            r'#: .*templates/',
+            r'#: .*static/',
+            r'msgid "Welcome to Django"',
+            r'msgid "User"',
+            r'msgid "Home"',
+            r'msgid "Submit"',
+            r'msgid "Logout"',
+            r'msgid "Login"',
+            r'msgid "Register"',
+            r'msgid "Password"',
+            r'msgid "Email"',
+            r'msgid "Username"',
+        ],
+        'flask': [
+            r'#: .*\.py',
+            r'msgid "flask"',
+            r'msgstr "Flask"',
+            r'from flask_babel',
+            r'Project-Id-Version: Flask',
+            r'#: .*app\.py',
+            r'#: .*routes\.py',
+            r'#: .*__init__\.py',
+        ],
+        'vue': [
+            r'msgid "vue"',
+            r'msgstr "Vue"',
+            r'#: .*\.vue',
+            r'#: .*vue.*',
+            r'Project-Id-Version: Vue',
+            r'#: .*components/',
+            r'#: .*pages/',
+            r'#: .*store/',
+        ],
+        'react': [
+            r'msgid "react"',
+            r'msgstr "React"',
+            r'#: .*\.jsx',
+            r'#: .*\.tsx',
+            r'#: .*react.*',
+            r'Project-Id-Version: React',
+            r'#: .*components/',
+            r'#: .*pages/',
+            r'#: .*src/',
+        ],
+        'angular': [
+            r'msgid "angular"',
+            r'msgstr "Angular"',
+            r'#: .*\.ts',
+            r'#: .*angular.*',
+            r'Project-Id-Version: Angular',
+            r'#: .*components/',
+            r'#: .*services/',
+            r'#: .*modules/',
+        ],
+        'laravel': [
+            r'msgid "laravel"',
+            r'msgstr "Laravel"',
+            r'#: .*\.php',
+            r'#: .*laravel.*',
+            r'Project-Id-Version: Laravel',
+            r'#: .*resources/',
+            r'#: .*app/',
+            r'#: .*routes/',
+        ],
+        'symfony': [
+            r'msgid "symfony"',
+            r'msgstr "Symfony"',
+            r'#: .*symfony.*',
+            r'Project-Id-Version: Symfony',
+            r'#: .*src/',
+            r'#: .*templates/',
+            r'#: .*translations/',
+        ],
+        'wordpress': [
+            r'msgid "wordpress"',
+            r'msgstr "WordPress"',
+            r'#: .*wordpress.*',
+            r'#: .*wp-.*',
+            r'Project-Id-Version: WordPress',
+            r'#: .*wp-content/',
+            r'#: .*wp-includes/',
+            r'msgid "WordPress"',
+        ],
+        'joomla': [
+            r'msgid "joomla"',
+            r'msgstr "Joomla"',
+            r'#: .*joomla.*',
+            r'Project-Id-Version: Joomla',
+            r'#: .*components/',
+            r'#: .*modules/',
+            r'#: .*plugins/',
+        ],
+        'drupal': [
+            r'msgid "drupal"',
+            r'msgstr "Drupal"',
+            r'#: .*drupal.*',
+            r'Project-Id-Version: Drupal',
+            r'#: .*modules/',
+            r'#: .*themes/',
+            r'#: .*sites/',
+        ],
+    }
+    
+    # Compter les correspondances pour chaque framework
+    framework_scores = {}
+    
+    for framework, pattern_list in patterns.items():
+        score = 0
+        for pattern in pattern_list:
+            if re.search(pattern, content, re.IGNORECASE):
+                score += 1
+        if score > 0:
+            framework_scores[framework] = score
+    
+    # Debug: afficher les scores pour le diagnostic
+    if framework_scores:
+        print(f"DEBUG - Scores des frameworks: {framework_scores}")
+    
+    # Retourner le framework avec le score le plus élevé
+    if framework_scores:
+        detected_framework = max(framework_scores, key=framework_scores.get)
+        if framework_scores[detected_framework] >= 1:
+            return detected_framework
+    
+    # Si aucun pattern spécifique n'est trouvé, essayer de détecter par contexte
+    if re.search(r'#: .*\.py', content):
+        # Si on a des références Python, c'est probablement Django ou Flask
+        if re.search(r'Project-Id-Version: Django', content, re.IGNORECASE):
+            return 'django'
+        elif re.search(r'Project-Id-Version: Flask', content, re.IGNORECASE):
+            return 'flask'
+        else:
+            # Par défaut, si on a des .py, c'est probablement Django
+            return 'django'
+    elif re.search(r'#: .*\.php', content):
+        return 'php'
+    elif re.search(r'#: .*\.js', content):
+        return 'javascript'
+    elif re.search(r'#: .*\.vue', content):
+        return 'vue'
+    elif re.search(r'#: .*\.ts', content):
+        return 'typescript'
+    
+    return 'generic'
+
+
+def detect_framework_from_json(content):
+    """
+    Détecte le framework basé sur le contenu d'un fichier JSON
+    """
+    try:
+        # Essayer de parser le JSON
+        data = json.loads(content)
+        
+        # Patterns pour détecter différents frameworks
+        patterns = {
+            'react': [
+                r'react',
+                r'jsx',
+                r'tsx',
+                r'create-react-app',
+            ],
+            'vue': [
+                r'vue',
+                r'vue-i18n',
+                r'vuex',
+            ],
+            'angular': [
+                r'angular',
+                r'@angular',
+                r'ngx-translate',
+            ],
+            'flutter': [
+                r'flutter',
+                r'flutter_localizations',
+                r'@flutter',
+            ],
+            'react-native': [
+                r'react-native',
+                r'react_native',
+                r'@react-native',
+            ],
+            'nextjs': [
+                r'next',
+                r'nextjs',
+                r'@next',
+            ],
+            'nuxt': [
+                r'nuxt',
+                r'@nuxt',
+            ],
+            'svelte': [
+                r'svelte',
+                r'@svelte',
+            ],
+            'ember': [
+                r'ember',
+                r'@ember',
+            ],
+        }
+        
+        # Convertir le contenu en string pour la recherche
+        content_str = json.dumps(data, ensure_ascii=False)
+        
+        # Compter les correspondances pour chaque framework
+        framework_scores = {}
+        
+        for framework, pattern_list in patterns.items():
+            score = 0
+            for pattern in pattern_list:
+                if re.search(pattern, content_str, re.IGNORECASE):
+                    score += 1
+            if score > 0:
+                framework_scores[framework] = score
+        
+        # Retourner le framework avec le score le plus élevé
+        if framework_scores:
+            detected_framework = max(framework_scores, key=framework_scores.get)
+            if framework_scores[detected_framework] >= 1:
+                return detected_framework
+        
+        # Détection par structure de données
+        if isinstance(data, dict):
+            # Vérifier les clés communes
+            if 'locale' in data or 'language' in data:
+                return 'i18n'
+            elif 'messages' in data or 'translations' in data:
+                return 'translation'
+            elif 'app' in data or 'application' in data:
+                return 'application'
+        
+        return 'generic'
+        
+    except json.JSONDecodeError:
+        # Si ce n'est pas du JSON valide, essayer de détecter par contenu brut
+        if re.search(r'react', content, re.IGNORECASE):
+            return 'react'
+        elif re.search(r'vue', content, re.IGNORECASE):
+            return 'vue'
+        elif re.search(r'angular', content, re.IGNORECASE):
+            return 'angular'
+        elif re.search(r'flutter', content, re.IGNORECASE):
+            return 'flutter'
+        
+        return 'unknown'
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
@@ -135,28 +422,23 @@ def process_translation_file(self, file_id):
         try:
             file_type = translation_file.file_type.lower()
             
+            # Détection automatique du framework
+            detected_framework = detect_framework_from_content(file_path, file_type, encoding)
+            translation_file.detected_framework = detected_framework
+            translation_file.save()
+            
+            logger.info(f"Framework détecté: {detected_framework} pour le fichier {file_id}")
+            
             if file_type == 'po':
                 result = process_po_file(translation_file, file_path, encoding, self)
             elif file_type == 'json':
                 result = process_json_file(translation_file, file_path, encoding, self)
-            elif file_type == 'xml':
-                result = process_xml_file(translation_file, file_path, encoding, self)
-            elif file_type == 'csv':
-                result = process_csv_file(translation_file, file_path, encoding, self)
-            elif file_type in ['php', 'properties']:
-                result = process_php_file(translation_file, file_path, encoding, self)
-            elif file_type in ['yaml', 'yml']:
-                result = process_yaml_file(translation_file, file_path, encoding, self)
-            elif file_type == 'arb':
-                result = process_arb_file(translation_file, file_path, encoding, self)
-            elif file_type == 'ts':
-                result = process_ts_file(translation_file, file_path, encoding, self)
             else:
                 logger.error(f"Type de fichier non supporté: {file_type}")
                 translation_file.status = 'error'
-                translation_file.error_message = f'Type de fichier non supporté: {file_type}'
+                translation_file.error_message = f'Type de fichier non supporté: {file_type}. Seuls les formats .po et .json sont autorisés.'
                 translation_file.save()
-                return {'status': 'error', 'message': f'Type de fichier non supporté: {file_type}'}
+                return {'status': 'error', 'message': f'Type de fichier non supporté: {file_type}. Seuls les formats .po et .json sont autorisés.'}
             
             return result
             
@@ -229,10 +511,7 @@ def process_po_file(translation_file, file_path, encoding, task):
                     file=translation_file,
                     key=entry.msgid[:500] if entry.msgid else '',  # Limiter la taille
                     source_text=entry.msgid,
-                    # CORRECTION: Utiliser un champ existant pour le texte traduit
-                    # Option 1: Si vous voulez stocker msgstr dans context
                     context=entry.msgstr or '',
-                    # Option 2: Ou créer un champ dédié dans votre modèle
                     line_number=entry.linenum,
                     is_translated=bool(entry.msgstr and not entry.fuzzy),
                     is_fuzzy=entry.fuzzy,
@@ -286,7 +565,7 @@ def process_po_file(translation_file, file_path, encoding, task):
         translation_file.error_message = error_msg
         translation_file.save()
         return {'status': 'error', 'message': error_msg}
-    
+
 
 def process_json_file(translation_file, file_path, encoding, task):
     """Traite un fichier JSON de traduction"""
@@ -394,803 +673,6 @@ def process_json_file(translation_file, file_path, encoding, task):
         translation_file.error_message = error_msg
         translation_file.save()
         return {'status': 'error', 'message': error_msg}
-
-
-def process_xml_file(translation_file, file_path, encoding, task):
-    """Traite un fichier XML de traduction (format Android strings.xml)"""
-    from .models import TranslationString
-    import xml.etree.ElementTree as ET
-    
-    try:
-        # Parser le fichier XML
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        
-        # Chercher les éléments string
-        string_elements = root.findall('.//string')
-        total_entries = len(string_elements)
-        
-        if total_entries == 0:
-            translation_file.status = 'error'
-            translation_file.error_message = 'Aucun élément <string> trouvé dans le fichier XML'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Aucun élément string trouvé'}
-        
-        logger.info(f"Traitement de {total_entries} éléments XML string")
-        created_strings = 0
-        
-        batch_size = 100
-        strings_to_create = []
-        
-        for i, element in enumerate(string_elements):
-            try:
-                # Mise à jour du progrès
-                if i % 10 == 0:
-                    progress = int((i / total_entries) * 100)
-                    task.update_state(
-                        state='PROGRESS',
-                        meta={
-                            'current': i,
-                            'total': total_entries,
-                            'strings_created': created_strings,
-                            'progress': progress
-                        }
-                    )
-                
-                key = element.get('name', f'string_{i}')
-                value = element.text or ''
-                
-                translation_string = TranslationString(
-                    file=translation_file,
-                    key=key[:500],
-                    source_text=value,
-                    context='',
-                    line_number=i + 1,
-                    is_translated=False,
-                    is_fuzzy=False,
-                    is_plural=False
-                )
-                
-                strings_to_create.append(translation_string)
-                
-                # Créer par lots
-                if len(strings_to_create) >= batch_size:
-                    created_count = bulk_create_strings(strings_to_create, translation_file)
-                    created_strings += created_count
-                    strings_to_create = []
-                
-            except Exception as e:
-                logger.warning(f"Erreur lors du traitement de l'élément {i}: {e}")
-                continue
-        
-        # Créer les dernières chaînes restantes
-        if strings_to_create:
-            created_count = bulk_create_strings(strings_to_create, translation_file)
-            created_strings += created_count
-        
-        # Finaliser le traitement
-        with transaction.atomic():
-            translation_file.status = 'completed'
-            translation_file.total_strings = created_strings
-            translation_file.error_message = ''
-            translation_file.save()
-        
-        logger.info(f"Traitement XML terminé: {created_strings} chaînes créées")
-        return {
-            'status': 'success',
-            'message': f'{created_strings} chaînes de traduction créées',
-            'total_strings': created_strings
-        }
-        
-    except ET.ParseError as e:
-        error_msg = f'Erreur de format XML: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-    
-    except Exception as e:
-        error_msg = f'Erreur lors du traitement du fichier XML: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-
-
-def process_csv_file(translation_file, file_path, encoding, task):
-    """Traite un fichier CSV de traduction"""
-    from .models import TranslationString
-    import csv
-    
-    try:
-        # Ouvrir et lire le fichier CSV
-        with open(file_path, 'r', encoding=encoding) as f:
-            # Détecter le délimiteur
-            sample = f.read(1024)
-            f.seek(0)
-            sniffer = csv.Sniffer()
-            delimiter = sniffer.sniff(sample).delimiter
-            
-            reader = csv.DictReader(f, delimiter=delimiter)
-            
-            # Vérifier les colonnes requises
-            required_columns = ['key', 'source_text']
-            if not all(col in reader.fieldnames for col in required_columns):
-                translation_file.status = 'error'
-                translation_file.error_message = f'Colonnes requises manquantes: {required_columns}'
-                translation_file.save()
-                return {'status': 'error', 'message': 'Colonnes requises manquantes'}
-            
-            # Compter le nombre total de lignes
-            rows = list(reader)
-            total_entries = len(rows)
-            
-            if total_entries == 0:
-                translation_file.status = 'error'
-                translation_file.error_message = 'Fichier CSV vide'
-                translation_file.save()
-                return {'status': 'error', 'message': 'Fichier CSV vide'}
-            
-            logger.info(f"Traitement de {total_entries} lignes CSV")
-            created_strings = 0
-            
-            batch_size = 100
-            strings_to_create = []
-            
-            for i, row in enumerate(rows):
-                try:
-                    # Mise à jour du progrès
-                    if i % 10 == 0:
-                        progress = int((i / total_entries) * 100)
-                        task.update_state(
-                            state='PROGRESS',
-                            meta={
-                                'current': i,
-                                'total': total_entries,
-                                'strings_created': created_strings,
-                                'progress': progress
-                            }
-                        )
-                    
-                    key = row.get('key', '').strip()
-                    source_text = row.get('source_text', '').strip()
-                    
-                    if not key or not source_text:
-                        continue  # Ignorer les lignes vides
-                    
-                    # Utiliser context pour stocker le texte traduit s'il existe
-                    translated_text = row.get('translated_text', '').strip()
-                    context_value = row.get('context', '').strip()
-                    
-                    # Si on a du texte traduit, on l'utilise comme context, sinon on garde le context original
-                    final_context = translated_text if translated_text else context_value
-                    
-                    translation_string = TranslationString(
-                        file=translation_file,
-                        key=key[:500],
-                        source_text=source_text,
-                        context=final_context,
-                        line_number=i + 2,  # +2 car ligne 1 = headers
-                        is_translated=bool(translated_text),
-                        is_fuzzy=row.get('is_fuzzy', '').lower() == 'true',
-                        is_plural=row.get('is_plural', '').lower() == 'true'
-                    )
-                    
-                    strings_to_create.append(translation_string)
-                    
-                    # Créer par lots
-                    if len(strings_to_create) >= batch_size:
-                        created_count = bulk_create_strings(strings_to_create, translation_file)
-                        created_strings += created_count
-                        strings_to_create = []
-                    
-                except Exception as e:
-                    logger.warning(f"Erreur lors du traitement de la ligne {i}: {e}")
-                    continue
-            
-            # Créer les dernières chaînes restantes
-            if strings_to_create:
-                created_count = bulk_create_strings(strings_to_create, translation_file)
-                created_strings += created_count
-            
-            # Finaliser le traitement
-            with transaction.atomic():
-                translation_file.status = 'completed'
-                translation_file.total_strings = created_strings
-                translation_file.error_message = ''
-                translation_file.save()
-            
-            logger.info(f"Traitement CSV terminé: {created_strings} chaînes créées")
-            return {
-                'status': 'success',
-                'message': f'{created_strings} chaînes de traduction créées',
-                'total_strings': created_strings
-            }
-            
-    except UnicodeDecodeError as e:
-        error_msg = f'Erreur d\'encodage CSV: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-    
-    except Exception as e:
-        error_msg = f'Erreur lors du traitement du fichier CSV: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-
-
-def process_php_file(translation_file, file_path, encoding, task):
-    """Traite un fichier PHP de traduction (format Laravel/array PHP)"""
-    from .models import TranslationString
-    import re
-    
-    try:
-        # Lire le fichier PHP
-        with open(file_path, 'r', encoding=encoding) as f:
-            content = f.read()
-        
-        # Pattern pour extraire les clés/valeurs des arrays PHP
-        # Supporte: 'key' => 'value', "key" => "value", 'key' => "value", etc.
-        pattern = r"['\"]([^'\"]+)['\"][\s]*=>[\s]*['\"]([^'\"]*)['\"]"
-        matches = re.findall(pattern, content)
-        
-        total_entries = len(matches)
-        if total_entries == 0:
-            translation_file.status = 'error'
-            translation_file.error_message = 'Aucune traduction trouvée dans le fichier PHP'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Aucune traduction trouvée'}
-        
-        logger.info(f"Traitement de {total_entries} entrées PHP")
-        created_strings = 0
-        
-        batch_size = 100
-        strings_to_create = []
-        
-        for i, (key, value) in enumerate(matches):
-            try:
-                # Mise à jour du progrès
-                if i % 10 == 0:
-                    progress = int((i / total_entries) * 100)
-                    task.update_state(
-                        state='PROGRESS',
-                        meta={
-                            'current': i,
-                            'total': total_entries,
-                            'strings_created': created_strings,
-                            'progress': progress
-                        }
-                    )
-                
-                translation_string = TranslationString(
-                    file=translation_file,
-                    key=key[:500],
-                    source_text=value,
-                    context='',
-                    line_number=i + 1,
-                    is_translated=False,
-                    is_fuzzy=False,
-                    is_plural=False
-                )
-                
-                strings_to_create.append(translation_string)
-                
-                # Créer par lots
-                if len(strings_to_create) >= batch_size:
-                    created_count = bulk_create_strings(strings_to_create, translation_file)
-                    created_strings += created_count
-                    strings_to_create = []
-                
-            except Exception as e:
-                logger.warning(f"Erreur lors du traitement de l'entrée PHP {i}: {e}")
-                continue
-        
-        # Créer les dernières chaînes restantes
-        if strings_to_create:
-            created_count = bulk_create_strings(strings_to_create, translation_file)
-            created_strings += created_count
-        
-        # Finaliser le traitement
-        with transaction.atomic():
-            translation_file.status = 'completed'
-            translation_file.total_strings = created_strings
-            translation_file.error_message = ''
-            translation_file.save()
-        
-        logger.info(f"Traitement PHP terminé: {created_strings} chaînes créées")
-        return {
-            'status': 'success',
-            'message': f'{created_strings} chaînes de traduction créées',
-            'total_strings': created_strings
-        }
-        
-    except Exception as e:
-        error_msg = f'Erreur lors du traitement du fichier PHP: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-
-
-
-def process_yaml_file(translation_file, file_path, encoding, task):
-    """Traite un fichier YAML/YML de traduction"""
-    from .models import TranslationString
-    
-    try:
-        import yaml
-        
-        # Charger le fichier YAML
-        with open(file_path, 'r', encoding=encoding) as f:
-            data = yaml.safe_load(f)
-        
-        if not isinstance(data, dict):
-            translation_file.status = 'error'
-            translation_file.error_message = 'Format YAML invalide: doit être un objet'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Format YAML invalide'}
-        
-        # Aplatir la structure YAML
-        flat_data = flatten_json(data)
-        total_entries = len(flat_data)
-        
-        if total_entries == 0:
-            translation_file.status = 'error'
-            translation_file.error_message = 'Fichier YAML vide'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Fichier YAML vide'}
-        
-        logger.info(f"Traitement de {total_entries} entrées YAML")
-        created_strings = 0
-        
-        batch_size = 100
-        strings_to_create = []
-        
-        for i, (key, value) in enumerate(flat_data.items()):
-            try:
-                # Mise à jour du progrès
-                if i % 10 == 0:
-                    progress = int((i / total_entries) * 100)
-                    task.update_state(
-                        state='PROGRESS',
-                        meta={
-                            'current': i,
-                            'total': total_entries,
-                            'strings_created': created_strings,
-                            'progress': progress
-                        }
-                    )
-                
-                # Traiter seulement les valeurs string
-                if isinstance(value, str):
-                    translation_string = TranslationString(
-                        file=translation_file,
-                        key=key[:500],
-                        source_text=value,
-                        context='',
-                        line_number=i + 1,
-                        is_translated=False,
-                        is_fuzzy=False,
-                        is_plural=False
-                    )
-                    
-                    strings_to_create.append(translation_string)
-                
-                # Créer par lots
-                if len(strings_to_create) >= batch_size:
-                    created_count = bulk_create_strings(strings_to_create, translation_file)
-                    created_strings += created_count
-                    strings_to_create = []
-                
-            except Exception as e:
-                logger.warning(f"Erreur lors du traitement de la clé YAML {key}: {e}")
-                continue
-        
-        # Créer les dernières chaînes restantes
-        if strings_to_create:
-            created_count = bulk_create_strings(strings_to_create, translation_file)
-            created_strings += created_count
-        
-        # Finaliser le traitement
-        with transaction.atomic():
-            translation_file.status = 'completed'
-            translation_file.total_strings = created_strings
-            translation_file.error_message = ''
-            translation_file.save()
-        
-        logger.info(f"Traitement YAML terminé: {created_strings} chaînes créées")
-        return {
-            'status': 'success',
-            'message': f'{created_strings} chaînes de traduction créées',
-            'total_strings': created_strings
-        }
-        
-    except ImportError:
-        error_msg = 'Bibliothèque PyYAML non disponible'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-    
-    except yaml.YAMLError as e:
-        error_msg = f'Erreur de format YAML: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-    
-    except Exception as e:
-        error_msg = f'Erreur lors du traitement du fichier YAML: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-    
-
-def process_arb_file(translation_file, file_path, encoding, task):
-    """Traite un fichier ARB (Application Resource Bundle) Flutter"""
-    from .models import TranslationString
-    import json
-    
-    try:
-        # Charger le fichier ARB (c'est du JSON avec une structure spécifique)
-        with open(file_path, 'r', encoding=encoding) as f:
-            data = json.load(f)
-        
-        if not isinstance(data, dict):
-            translation_file.status = 'error'
-            translation_file.error_message = 'Format ARB invalide: doit être un objet'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Format ARB invalide'}
-        
-        # Filtrer les clés de métadonnées ARB (qui commencent par @)
-        translation_entries = {k: v for k, v in data.items() 
-                             if not k.startswith('@') and isinstance(v, str)}
-        
-        total_entries = len(translation_entries)
-        if total_entries == 0:
-            translation_file.status = 'error'
-            translation_file.error_message = 'Aucune traduction trouvée dans le fichier ARB'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Aucune traduction trouvée'}
-        
-        logger.info(f"Traitement de {total_entries} entrées ARB")
-        created_strings = 0
-        
-        batch_size = 100
-        strings_to_create = []
-        
-        for i, (key, value) in enumerate(translation_entries.items()):
-            try:
-                # Mise à jour du progrès
-                if i % 10 == 0:
-                    progress = int((i / total_entries) * 100)
-                    task.update_state(
-                        state='PROGRESS',
-                        meta={
-                            'current': i,
-                            'total': total_entries,
-                            'strings_created': created_strings,
-                            'progress': progress
-                        }
-                    )
-                
-                # Récupérer les métadonnées pour cette clé si elles existent
-                metadata_key = f"@{key}"
-                metadata = data.get(metadata_key, {})
-                context = metadata.get('description', '') if isinstance(metadata, dict) else ''
-                
-                translation_string = TranslationString(
-                    file=translation_file,
-                    key=key[:500],
-                    source_text=value,
-                    context=context,
-                    line_number=i + 1,
-                    is_translated=False,
-                    is_fuzzy=False,
-                    is_plural=False
-                )
-                
-                strings_to_create.append(translation_string)
-                
-                # Créer par lots
-                if len(strings_to_create) >= batch_size:
-                    created_count = bulk_create_strings(strings_to_create, translation_file)
-                    created_strings += created_count
-                    strings_to_create = []
-                
-            except Exception as e:
-                logger.warning(f"Erreur lors du traitement de l'entrée ARB {key}: {e}")
-                continue
-        
-        # Créer les dernières chaînes restantes
-        if strings_to_create:
-            created_count = bulk_create_strings(strings_to_create, translation_file)
-            created_strings += created_count
-        
-        # Finaliser le traitement
-        with transaction.atomic():
-            translation_file.status = 'completed'
-            translation_file.total_strings = created_strings
-            translation_file.error_message = ''
-            translation_file.save()
-        
-        logger.info(f"Traitement ARB terminé: {created_strings} chaînes créées")
-        return {
-            'status': 'success',
-            'message': f'{created_strings} chaînes de traduction créées',
-            'total_strings': created_strings
-        }
-        
-    except json.JSONDecodeError as e:
-        error_msg = f'Erreur de format ARB/JSON: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-    
-    except Exception as e:
-        error_msg = f'Erreur lors du traitement du fichier ARB: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-
-
-
-def process_properties_file(translation_file, file_path, encoding, task):
-    """Traite un fichier Properties (Java/Android)"""
-    from .models import TranslationString
-    
-    try:
-        # Lire le fichier properties
-        with open(file_path, 'r', encoding=encoding) as f:
-            lines = f.readlines()
-        
-        translation_entries = {}
-        line_numbers = {}
-        
-        for line_num, line in enumerate(lines, 1):
-            line = line.strip()
-            
-            # Ignorer les lignes vides et les commentaires
-            if not line or line.startswith('#') or line.startswith('!'):
-                continue
-            
-            # Chercher le pattern key=value ou key:value
-            if '=' in line:
-                key, value = line.split('=', 1)
-            elif ':' in line:
-                key, value = line.split(':', 1)
-            else:
-                continue
-            
-            key = key.strip()
-            value = value.strip()
-            
-            if key and value:
-                translation_entries[key] = value
-                line_numbers[key] = line_num
-        
-        total_entries = len(translation_entries)
-        if total_entries == 0:
-            translation_file.status = 'error'
-            translation_file.error_message = 'Aucune propriété trouvée dans le fichier'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Aucune propriété trouvée'}
-        
-        logger.info(f"Traitement de {total_entries} propriétés")
-        created_strings = 0
-        
-        batch_size = 100
-        strings_to_create = []
-        
-        for i, (key, value) in enumerate(translation_entries.items()):
-            try:
-                # Mise à jour du progrès
-                if i % 10 == 0:
-                    progress = int((i / total_entries) * 100)
-                    task.update_state(
-                        state='PROGRESS',
-                        meta={
-                            'current': i,
-                            'total': total_entries,
-                            'strings_created': created_strings,
-                            'progress': progress
-                        }
-                    )
-                
-                translation_string = TranslationString(
-                    file=translation_file,
-                    key=key[:500],
-                    source_text=value,
-                    context='',
-                    line_number=line_numbers.get(key, i + 1),
-                    is_translated=False,
-                    is_fuzzy=False,
-                    is_plural=False
-                )
-                
-                strings_to_create.append(translation_string)
-                
-                # Créer par lots
-                if len(strings_to_create) >= batch_size:
-                    created_count = bulk_create_strings(strings_to_create, translation_file)
-                    created_strings += created_count
-                    strings_to_create = []
-                
-            except Exception as e:
-                logger.warning(f"Erreur lors du traitement de la propriété {key}: {e}")
-                continue
-        
-        # Créer les dernières chaînes restantes
-        if strings_to_create:
-            created_count = bulk_create_strings(strings_to_create, translation_file)
-            created_strings += created_count
-        
-        # Finaliser le traitement
-        with transaction.atomic():
-            translation_file.status = 'completed'
-            translation_file.total_strings = created_strings
-            translation_file.error_message = ''
-            translation_file.save()
-        
-        logger.info(f"Traitement Properties terminé: {created_strings} chaînes créées")
-        return {
-            'status': 'success',
-            'message': f'{created_strings} chaînes de traduction créées',
-            'total_strings': created_strings
-        }
-        
-    except Exception as e:
-        error_msg = f'Erreur lors du traitement du fichier Properties: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-    
-
-
-def process_ts_file(translation_file, file_path, encoding, task):
-    """Traite un fichier TypeScript de traduction (format i18next ou similaire)"""
-    from .models import TranslationString
-    import re
-    import json
-    
-    try:
-        # Lire le fichier TypeScript
-        with open(file_path, 'r', encoding=encoding) as f:
-            content = f.read()
-        
-        # Extraire l'objet de traduction du fichier TS
-        # Pattern pour capturer export default { ... } ou export const translations = { ... }
-        patterns = [
-            r'export\s+default\s+({.*?});',
-            r'export\s+const\s+\w+\s*=\s*({.*?});',
-            r'const\s+\w+\s*=\s*({.*?});'
-        ]
-        
-        translation_object = None
-        for pattern in patterns:
-            matches = re.findall(pattern, content, re.DOTALL)
-            if matches:
-                try:
-                    # Essayer de parser comme JSON (approximatif pour TS)
-                    json_str = matches[0]
-                    # Remplacer les clés non quotées par des clés quotées
-                    json_str = re.sub(r'(\w+):', r'"\1":', json_str)
-                    # Remplacer les apostrophes par des guillemets
-                    json_str = json_str.replace("'", '"')
-                    
-                    translation_object = json.loads(json_str)
-                    break
-                except json.JSONDecodeError:
-                    continue
-        
-        if not translation_object:
-            translation_file.status = 'error'
-            translation_file.error_message = 'Impossible d\'extraire l\'objet de traduction du fichier TS'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Objet de traduction non trouvé'}
-        
-        # Aplatir la structure
-        flat_data = flatten_json(translation_object)
-        total_entries = len(flat_data)
-        
-        if total_entries == 0:
-            translation_file.status = 'error'
-            translation_file.error_message = 'Aucune traduction trouvée dans le fichier TS'
-            translation_file.save()
-            return {'status': 'error', 'message': 'Aucune traduction trouvée'}
-        
-        logger.info(f"Traitement de {total_entries} entrées TypeScript")
-        created_strings = 0
-        
-        batch_size = 100
-        strings_to_create = []
-        
-        for i, (key, value) in enumerate(flat_data.items()):
-            try:
-                # Mise à jour du progrès
-                if i % 10 == 0:
-                    progress = int((i / total_entries) * 100)
-                    task.update_state(
-                        state='PROGRESS',
-                        meta={
-                            'current': i,
-                            'total': total_entries,
-                            'strings_created': created_strings,
-                            'progress': progress
-                        }
-                    )
-                
-                # Traiter seulement les valeurs string
-                if isinstance(value, str):
-                    translation_string = TranslationString(
-                        file=translation_file,
-                        key=key[:500],
-                        source_text=value,
-                        context='',  # Champ context vide car pas de traduction dans les fichiers TS source
-                        line_number=i + 1,
-                        is_translated=False,
-                        is_fuzzy=False,
-                        is_plural=False
-                    )
-                    
-                    strings_to_create.append(translation_string)
-                
-                # Créer par lots
-                if len(strings_to_create) >= batch_size:
-                    created_count = bulk_create_strings(strings_to_create, translation_file)
-                    created_strings += created_count
-                    strings_to_create = []
-                
-            except Exception as e:
-                logger.warning(f"Erreur lors du traitement de la clé TS {key}: {e}")
-                continue
-        
-        # Créer les dernières chaînes restantes
-        if strings_to_create:
-            created_count = bulk_create_strings(strings_to_create, translation_file)
-            created_strings += created_count
-        
-        # Finaliser le traitement
-        with transaction.atomic():
-            translation_file.status = 'completed'
-            translation_file.total_strings = created_strings
-            translation_file.error_message = ''
-            translation_file.save()
-        
-        logger.info(f"Traitement TypeScript terminé: {created_strings} chaînes créées")
-        return {
-            'status': 'success',
-            'message': f'{created_strings} chaînes de traduction créées',
-            'total_strings': created_strings
-        }
-        
-    except Exception as e:
-        error_msg = f'Erreur lors du traitement du fichier TypeScript: {str(e)}'
-        logger.error(error_msg)
-        translation_file.status = 'error'
-        translation_file.error_message = error_msg
-        translation_file.save()
-        return {'status': 'error', 'message': error_msg}
-
-
 
 
 def bulk_create_strings(strings_to_create, translation_file):

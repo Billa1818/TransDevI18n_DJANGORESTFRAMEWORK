@@ -1,4 +1,6 @@
-#!/home/billa/Documents/DD/env/bin/python3
+#!/bin/sh
+'''exec' "/home/billa/PROJET/TRANSDEVI18N/TransDevI18n  BACK-END/TransDevI18n/env/bin/python3" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys

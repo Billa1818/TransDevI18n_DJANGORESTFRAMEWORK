@@ -346,7 +346,7 @@ def test_django_translation():
     client = TranslationAPIClient()
     
     # Chemin fixe du fichier
-    django_po_path = "/home/billa/Téléchargements/django_translation.po"
+    django_po_path = "/home/billa/Téléchargements/translate_files/django.po"
     
     # Données utilisateur pour les tests
     user_data = {

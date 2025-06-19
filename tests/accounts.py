@@ -180,8 +180,8 @@ if __name__ == "__main__":
     
     # Données utilisateur
     user_data = {
-        "username": "Billauijkghkyu1818",
-        "email": "billa18jukjhkjhpfoio18@gmail.com",
+        "username": "Billaduijkghkyu1818",
+        "email": "billa1d8jukjhkjhpfoio18@gmail.com",
         "password": "Azqsdf12,",
         "password_confirm": "Azqsdf12,",  # Correspond maintenant au paramètre attendu
         "first_name": "John",

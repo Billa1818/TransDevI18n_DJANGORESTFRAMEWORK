@@ -119,16 +119,13 @@ class TranslationFileCreateSerializer(serializers.ModelSerializer):
 
     def validate_file(self, value):
         """Valide le fichier uploadé"""
-        # Vérifier l'extension
-        allowed_extensions = [
-            'po', 'json', 'php', 'yml', 'yaml', 'xml', 
-            'arb', 'properties', 'csv', 'ts'
-        ]
+        # Vérifier l'extension - seulement .po et .json autorisés
+        allowed_extensions = ['po', 'json']
         
         file_extension = value.name.split('.')[-1].lower()
         if file_extension not in allowed_extensions:
             raise serializers.ValidationError(
-                f"Extension non supportée. Extensions autorisées: {', '.join(allowed_extensions)}"
+                f"Extension non supportée. Seules les extensions .po et .json sont autorisées."
             )
 
         # Vérifier que le fichier n'est pas vide
