@@ -16,20 +16,26 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Découverte automatique des tâches dans toutes les apps Django dans le fichier tasks.py
 app.autodiscover_tasks()
 
+# Configuration des queues et du routage
+app.conf.update(
+    task_default_queue='celery',
+    task_default_exchange='celery',
+    task_default_routing_key='celery',
+    task_routes={
+        'translations.tasks.*': {'queue': 'celery'},
+        'notifications.tasks.*': {'queue': 'celery'},
+        'files.tasks.*': {'queue': 'celery'},
+        'accounts.tasks.*': {'queue': 'celery'},
+    },
+    task_serializer='json',
+    accept_content=['json'],
+    result_serializer='json',
+    timezone='UTC',
+    enable_utc=True,
+)
+
 # Planification des tâches avec Celery Beat
 app.conf.beat_schedule = {
-    
-}
-
-@app.task(bind=True)
-def debug_task(self):
-    print(f'Requête : {self.request!r}')
-
-# demarer le worker Celery avec la commande :
-# celery -A TransDevI18n worker --loglevel=info
-
-
-CELERY_BEAT_SCHEDULE = {
     'cleanup-old-notifications': {
         'task': 'notifications.tasks.cleanup_old_notifications',
         'schedule': crontab(hour=2, minute=0),  # Tous les jours à 2h00
@@ -45,3 +51,10 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=1, minute=0, day_of_week=0),  # Tous les dimanches à 1h00
     },
 }
+
+@app.task(bind=True)
+def debug_task(self):
+    print(f'Requête : {self.request!r}')
+
+# demarer le worker Celery avec la commande :
+# celery -A TransDevI18n worker --loglevel=info

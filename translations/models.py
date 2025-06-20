@@ -1,10 +1,11 @@
 # =============================================================================
-# APP: translations (Gestion des traductions et services)
+# APP: translations (Gestion des traductions avec Google Translate)
 # =============================================================================
 
 # translations/models.py
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 import json
 
 class Language(models.Model):
@@ -14,60 +15,17 @@ class Language(models.Model):
     native_name = models.CharField(max_length=100)  # Français, English, Español
     is_active = models.BooleanField(default=True)
     
-    @classmethod
-    def get_supported_by_service(cls, service_name):
-        """Retourne les langues supportées par un service"""
-        # Logique à implémenter selon les services
-        return cls.objects.filter(is_active=True)
-    
     def __str__(self):
         return f"{self.name} ({self.code})"
     
     class Meta:
         ordering = ['name']
 
-class TranslationService(models.Model):
-    """Services de traduction disponibles"""
-    SERVICE_TYPES = [
-        ('google', 'Google Translate'),
-        ('deepl', 'DeepL'),
-        ('azure', 'Azure Translator'),
-        ('argos', 'Argos Translate'),
-    ]
-    
-    name = models.CharField(max_length=50, choices=SERVICE_TYPES, unique=True)
-    display_name = models.CharField(max_length=100)
-    api_key = models.CharField(max_length=500, blank=True)
-    base_url = models.URLField(blank=True)
-    is_active = models.BooleanField(default=True)
-    daily_quota = models.IntegerField(blank=True, null=True)
-    monthly_quota = models.IntegerField(blank=True, null=True)
-    
-    # Configuration spécifique à chaque service
-    config = models.JSONField(default=dict, blank=True)
-    
-    def get_supported_languages(self):
-        """Retourne les langues supportées par ce service"""
-        return Language.get_supported_by_service(self.name)
-    
-    def __str__(self):
-        return self.display_name
-
 class Translation(models.Model):
-    """Traductions individuelles"""
-    TRANSLATION_METHODS = [
-        ('google', 'Google Translate'),
-        ('deepl', 'DeepL'),
-        ('azure', 'Azure Translator'),
-        ('argos', 'Argos Translate'),
-        ('manual', 'Manual Translation'),
-    ]
-    
+    """Traductions individuelles avec Google Translate"""
     string = models.ForeignKey('files.TranslationString', on_delete=models.CASCADE, related_name='translations')
     target_language = models.ForeignKey(Language, on_delete=models.CASCADE)
     translated_text = models.TextField()
-    translation_method = models.CharField(max_length=20, choices=TRANSLATION_METHODS)
-    service = models.ForeignKey(TranslationService, on_delete=models.SET_NULL, null=True, blank=True)
     confidence_score = models.FloatField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -91,7 +49,7 @@ class Translation(models.Model):
         unique_together = ['string', 'target_language']
 
 class TranslationTask(models.Model):
-    """Tâches de traduction"""
+    """Tâches de traduction avec Google Translate"""
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('in_progress', 'In Progress'),
@@ -103,7 +61,6 @@ class TranslationTask(models.Model):
     file = models.ForeignKey('files.TranslationFile', on_delete=models.CASCADE, related_name='translation_tasks')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='translation_tasks')
     target_languages = models.ManyToManyField(Language)
-    service = models.ForeignKey(TranslationService, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
     # Progression

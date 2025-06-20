@@ -149,15 +149,12 @@ class TranslationStringAdmin(admin.ModelAdmin):
     list_display = [
         'key_truncated',
         'source_text_truncated', 
-        'translated_text_truncated',
-        'is_translated_badge',
-        'is_fuzzy',
+        'is_fuzzy_badge',
         'file_link',
         'line_number'
     ]
     
     list_filter = [
-        'is_translated',
         'is_fuzzy',
         'is_plural',
         'created_at',
@@ -183,10 +180,10 @@ class TranslationStringAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Contenu de traduction', {
-            'fields': ('key', 'source_text', 'translated_text', 'context', 'comment')
+            'fields': ('key', 'source_text', 'context', 'comment')
         }),
         ('Statut', {
-            'fields': ('is_translated', 'is_fuzzy', 'is_plural')
+            'fields': ('is_fuzzy', 'is_plural')
         }),
         ('Métadonnées', {
             'fields': ('file', 'line_number', 'created_at')
@@ -199,7 +196,7 @@ class TranslationStringAdmin(admin.ModelAdmin):
     
     date_hierarchy = 'created_at'
     
-    actions = ['mark_as_translated', 'mark_as_untranslated', 'clear_fuzzy_flag']
+    actions = ['clear_fuzzy_flag']
     
     list_per_page = 50
     
@@ -217,26 +214,17 @@ class TranslationStringAdmin(admin.ModelAdmin):
         return obj.source_text
     source_text_truncated.short_description = 'Texte source'
     
-    def translated_text_truncated(self, obj):
-        """Affiche le texte traduit tronqué"""
-        if obj.translated_text:
-            if len(obj.translated_text) > 40:
-                return obj.translated_text[:40] + '...'
-            return obj.translated_text
-        return format_html('<em style="color: #999;">Non traduit</em>')
-    translated_text_truncated.short_description = 'Texte traduit'
-    
-    def is_translated_badge(self, obj):
-        """Badge pour le statut de traduction"""
-        if obj.is_translated:
+    def is_fuzzy_badge(self, obj):
+        """Badge pour le statut fuzzy"""
+        if obj.is_fuzzy:
             return format_html(
-                '<span style="color: #28a745; font-weight: bold;">✓ Traduit</span>'
+                '<span style="color: #ffc107; font-weight: bold;">✓ Fuzzy</span>'
             )
         else:
             return format_html(
-                '<span style="color: #dc3545;">✗ Non traduit</span>'
+                '<span style="color: #6c757d;">✗ Non fuzzy</span>'
             )
-    is_translated_badge.short_description = 'Statut'
+    is_fuzzy_badge.short_description = 'Fuzzy'
     
     def file_link(self, obj):
         """Lien vers le fichier parent"""
@@ -259,18 +247,6 @@ class TranslationStringAdmin(admin.ModelAdmin):
             obj.file.get_status_display()
         )
     file_info_display.short_description = 'Informations du fichier'
-    
-    def mark_as_translated(self, request, queryset):
-        """Marque les chaînes comme traduites"""
-        updated = queryset.update(is_translated=True)
-        self.message_user(request, f'{updated} chaîne(s) marquée(s) comme traduite(s).')
-    mark_as_translated.short_description = "Marquer comme traduit"
-    
-    def mark_as_untranslated(self, request, queryset):
-        """Marque les chaînes comme non traduites"""
-        updated = queryset.update(is_translated=False)
-        self.message_user(request, f'{updated} chaîne(s) marquée(s) comme non traduite(s).')
-    mark_as_untranslated.short_description = "Marquer comme non traduit"
     
     def clear_fuzzy_flag(self, request, queryset):
         """Supprime le flag fuzzy"""

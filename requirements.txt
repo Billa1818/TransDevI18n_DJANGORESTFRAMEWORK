@@ -17,6 +17,7 @@ django-filter==25.1
 django-timezone-field==7.1
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
+googletrans==4.0.0rc1
 idna==3.10
 kombu==5.5.4
 packaging==25.0

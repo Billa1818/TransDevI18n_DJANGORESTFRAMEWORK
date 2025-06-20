@@ -346,14 +346,14 @@ def test_django_translation():
     client = TranslationAPIClient()
     
     # Chemin fixe du fichier
-    django_po_path = "/home/billa/Téléchargements/translate_files/django.po"
+    django_po_path = "/home/billa/PROJET FINI/activePay/activePay/locale/ar/LC_MESSAGES/django.po"
     
     # Données utilisateur pour les tests
     user_data = {
-        "username": "o_tesdddstDDer_2025",
-        "email": "d_tcesddtdceddr@exDDample.com",
-        "password": "DjangoTest123!",
-        "password_confirm": "DjangoTest123!",
+        "username": "billa12",
+        "email": "billa12@gmail.com",
+        "password": "1234",
+        "password_confirm": "1234",
         "first_name": "Django",
         "last_name": "Tester"
     }
@@ -381,7 +381,7 @@ def test_django_translation():
     
     # 3. Connexion
     print("\n2️⃣ === CONNEXION ===")
-    login_result = client.login("Billa1818@gmail.com","1234")
+    login_result = client.login("billa12@gmail.com","1234")
     if not login_result:
         print("❌ Impossible de se connecter. Test interrompu.")
         return

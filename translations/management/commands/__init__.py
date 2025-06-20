@@ -1,0 +1,1 @@
+# Dossier pour les commandes de management Django 

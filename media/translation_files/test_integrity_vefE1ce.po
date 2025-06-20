@@ -1,0 +1,6 @@
+
+msgid "Bonjour %(username)s, vous avez %(count)d messages."
+msgstr ""
+
+msgid "<strong>Attention</strong> : %(user)s doit valider !"
+msgstr ""

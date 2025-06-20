@@ -18,7 +18,7 @@ import chardet
 import time
 import json
 import re
-from .models import TranslationFile
+from .models import TranslationFile, TranslationString
 from django.db import transaction
 from django.utils import timezone
 
@@ -513,7 +513,6 @@ def process_po_file(translation_file, file_path, encoding, task):
                     source_text=entry.msgid,
                     context=entry.msgstr or '',
                     line_number=entry.linenum,
-                    is_translated=bool(entry.msgstr and not entry.fuzzy),
                     is_fuzzy=entry.fuzzy,
                     is_plural=bool(entry.msgid_plural),
                     comment='\n'.join(entry.comment.split('\n')[:5]) if entry.comment else ''
@@ -622,7 +621,6 @@ def process_json_file(translation_file, file_path, encoding, task):
                         source_text=value,
                         context='',  # Vide par défaut pour JSON
                         line_number=i + 1,
-                        is_translated=False,
                         is_fuzzy=False,
                         is_plural=False
                     )
@@ -776,7 +774,7 @@ def generate_translation_stats(self):
         
         # Statistiques des chaînes
         total_strings = TranslationString.objects.count()
-        translated_strings = TranslationString.objects.filter(is_translated=True).count()
+        translated_strings = TranslationString.objects.filter(translations__isnull=False).distinct().count()
         
         # Calcul du pourcentage
         translation_percentage = 0

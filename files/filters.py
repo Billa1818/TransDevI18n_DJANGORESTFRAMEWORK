@@ -1,4 +1,3 @@
-
 # =============================================================================
 # files/filters.py
 # =============================================================================
@@ -100,73 +99,38 @@ class TranslationFileFilter(filters.FilterSet):
 class TranslationStringFilter(filters.FilterSet):
     """Filtres pour les chaînes de traduction"""
     
-    # Filtres par fichier
-    file = filters.NumberFilter(field_name='file__id')
-    file_name = filters.CharFilter(
-        field_name='file__original_filename', 
-        lookup_expr='icontains'
-    )
+    # Filtres de recherche
+    search = filters.CharFilter(method='search_filter')
+    key_contains = filters.CharFilter(field_name='key', lookup_expr='icontains')
+    source_text_contains = filters.CharFilter(field_name='source_text', lookup_expr='icontains')
+    context_contains = filters.CharFilter(field_name='context', lookup_expr='icontains')
+    comment_contains = filters.CharFilter(field_name='comment', lookup_expr='icontains')
+    
+    # Filtres de fichier
+    file_id = filters.UUIDFilter(field_name='file__id')
+    file_name_contains = filters.CharFilter(field_name='file__original_filename', lookup_expr='icontains')
     file_type = filters.CharFilter(field_name='file__file_type')
+    file_status = filters.CharFilter(field_name='file__status')
     
-    # Filtres par contenu
-    key = filters.CharFilter(lookup_expr='icontains')
-    source_text = filters.CharFilter(lookup_expr='icontains')
-    context = filters.CharFilter(lookup_expr='icontains')
-    
-    # Filtres par statut
-    is_translated = filters.BooleanFilter()
+    # Filtres de statut
     is_fuzzy = filters.BooleanFilter()
     is_plural = filters.BooleanFilter()
     
-    # Filtres par ligne
-    line_number = filters.NumberFilter()
-    line_number_min = filters.NumberFilter(
-        field_name='line_number', 
-        lookup_expr='gte'
-    )
-    line_number_max = filters.NumberFilter(
-        field_name='line_number', 
-        lookup_expr='lte'
-    )
+    # Filtres de date
+    created_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
     
-    # Filtres par date
-    created_after = filters.DateTimeFilter(
-        field_name='created_at', 
-        lookup_expr='gte'
-    )
-    created_before = filters.DateTimeFilter(
-        field_name='created_at', 
-        lookup_expr='lte'
-    )
+    # Filtres spéciaux
+    has_translations = filters.BooleanFilter(method='has_translations_filter')
+    needs_translation = filters.BooleanFilter(method='needs_translation_filter')
     
-    # Filtres par traductions
-    has_translations = filters.BooleanFilter(method='filter_has_translations')
-    translations_count_min = filters.NumberFilter(method='filter_translations_count_min')
-    
-    # Recherche globale
-    search = filters.CharFilter(method='filter_search')
-
     class Meta:
         model = TranslationString
         fields = [
-            'file', 'is_translated', 'is_fuzzy', 'is_plural'
+            'file', 'is_fuzzy', 'is_plural'
         ]
 
-    def filter_has_translations(self, queryset, name, value):
-        """Filtre les chaînes qui ont des traductions ou non"""
-        if value:
-            return queryset.filter(translations__isnull=False).distinct()
-        else:
-            return queryset.filter(translations__isnull=True)
-
-    def filter_translations_count_min(self, queryset, name, value):
-        """Filtre par nombre minimum de traductions"""
-        from django.db.models import Count
-        return queryset.annotate(
-            translations_count=Count('translations')
-        ).filter(translations_count__gte=value)
-
-    def filter_search(self, queryset, name, value):
+    def search_filter(self, queryset, name, value):
         """Recherche globale dans key, source_text et context"""
         from django.db.models import Q
         return queryset.filter(
@@ -174,4 +138,18 @@ class TranslationStringFilter(filters.FilterSet):
             Q(source_text__icontains=value) |
             Q(context__icontains=value)
         )
+
+    def has_translations_filter(self, queryset, name, value):
+        """Filtre les chaînes qui ont des traductions ou non"""
+        if value:
+            return queryset.filter(translations__isnull=False).distinct()
+        else:
+            return queryset.filter(translations__isnull=True)
+
+    def needs_translation_filter(self, queryset, name, value):
+        """Filtre les chaînes qui nécessitent une traduction"""
+        if value:
+            return queryset.filter(translations__isnull=True)
+        else:
+            return queryset.filter(translations__isnull=False)
 

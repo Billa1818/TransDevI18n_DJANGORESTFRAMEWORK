@@ -1,4 +1,187 @@
-# App Files - Gestion des fichiers de traduction
+# 📁 Documentation API – Application `files`
+
+## Endpoints principaux
+
+---
+
+## 1. Fichiers de traduction (`TranslationFileViewSet`)
+
+### - **Lister les fichiers**
+`GET /api/files/`
+- Liste paginée des fichiers de traduction de l'utilisateur connecté (ou tous si admin).
+- **Filtres** : nom, type, statut, date, etc.
+- **Tri** : par date, taille, statut, nom.
+
+### - **Créer (uploader) un fichier**
+`POST /api/files/`
+- Upload d'un fichier PO/JSON.
+- **Body** : fichier à uploader (champ `file`)
+- **Réponse** : infos détaillées du fichier créé.
+
+### - **Voir le détail d'un fichier**
+`GET /api/files/{id}/`
+- Détail complet d'un fichier (métadonnées, stats, etc.)
+
+### - **Mettre à jour un fichier**
+`PUT /api/files/{id}/`
+- Mise à jour des métadonnées (ex : langue détectée, etc.)
+
+### - **Supprimer un fichier**
+`DELETE /api/files/{id}/`
+- Supprime le fichier et toutes ses chaînes associées.
+
+### - **Relancer le traitement d'un fichier**
+`POST /api/files/{id}/reprocess/`
+- Relance l'analyse et l'extraction des chaînes du fichier (supprime les anciennes chaînes).
+
+### - **Télécharger le fichier original**
+`GET /api/files/{id}/download/`
+- Retourne l'URL de téléchargement du fichier original.
+
+### - **Voir la progression du traitement**
+`GET /api/files/{id}/progress/`
+- Retourne l'état d'avancement du traitement (upload, parsing, completed, error, etc.)
+
+### - **Statistiques globales sur les fichiers**
+`GET /api/files/statistics/`
+- Statistiques agrégées : nombre total de fichiers, par statut, par type, taille totale, nombre total de chaînes.
+
+---
+
+## 2. Chaînes de traduction (`TranslationStringViewSet`)
+
+### - **Lister les chaînes**
+`GET /api/strings/`
+- Liste paginée des chaînes de tous les fichiers de l'utilisateur (ou tous si admin).
+- **Filtres** : clé, texte source, contexte, fichier, fuzzy, pluriel, etc.
+- **Tri** : par date, ligne, clé.
+
+### - **Créer une chaîne**
+`POST /api/strings/`
+- Ajoute une nouvelle chaîne à un fichier.
+
+### - **Voir le détail d'une chaîne**
+`GET /api/strings/{id}/`
+- Détail complet d'une chaîne (clé, texte source, contexte, etc.)
+
+### - **Mettre à jour une chaîne**
+`PUT /api/strings/{id}/`
+- Modifie le texte source, le contexte, etc.
+
+### - **Supprimer une chaîne**
+`DELETE /api/strings/{id}/`
+- Supprime la chaîne.
+
+### - **Lister les chaînes d'un fichier**
+`GET /api/strings/by_file/?file_id={file_uuid}`
+- Liste paginée des chaînes d'un fichier spécifique.
+
+### - **Statistiques globales sur les chaînes**
+`GET /api/strings/statistics/`
+- Statistiques agrégées : nombre total de chaînes, traduites, non traduites, fuzzy, pluriel, par fichier, taux de progression.
+
+---
+
+## 3. Paramètres de pagination et de filtrage
+
+- **Pagination** :  
+  - `page` (int), `page_size` (int, max 100)
+- **Recherche** :  
+  - `search` (texte global)
+- **Filtres principaux** :  
+  - Par fichier, par clé, par texte source, par contexte, par statut (fuzzy, pluriel), par date, etc.
+- **Tri** :  
+  - Par date, ligne, clé, etc.
+
+---
+
+## 4. Exemples de réponses
+
+### - **Fichier**
+```json
+{
+  "id": "uuid",
+  "original_filename": "messages.po",
+  "file_type": "po",
+  "file_size": 12345,
+  "uploaded_by": { "id": 1, "email": "user@mail.com" },
+  "uploaded_at": "2024-01-15T10:30:00Z",
+  "status": "completed",
+  "total_strings": 50,
+  "detected_language": "fr",
+  "detected_language_confidence": 0.98
+}
+```
+
+### - **Chaîne**
+```json
+{
+  "id": "uuid",
+  "file": "uuid",
+  "key": "welcome_message",
+  "source_text": "Welcome",
+  "context": "Message d'accueil",
+  "comment": "",
+  "is_fuzzy": false,
+  "is_plural": false,
+  "line_number": 12,
+  "created_at": "2024-01-15T10:31:00Z"
+}
+```
+
+### - **Statistiques fichiers**
+```json
+{
+  "total_files": 12,
+  "by_status": { "completed": 10, "processing": 2 },
+  "by_type": { "po": 8, "json": 4 },
+  "total_size": 1234567,
+  "total_strings": 500
+}
+```
+
+### - **Statistiques chaînes**
+```json
+{
+  "total_strings": 500,
+  "translated": 350,
+  "untranslated": 150,
+  "fuzzy": 20,
+  "plural": 10,
+  "by_file": { "messages.po": 200, "app.po": 300 },
+  "progress_percentage": 70.0
+}
+```
+
+---
+
+## 5. Sécurité
+
+- **Authentification requise** (JWT ou session)
+- Les utilisateurs non admin ne voient que leurs propres fichiers/chaînes.
+
+---
+
+## 6. Résumé des routes
+
+| Méthode | Endpoint                                 | Description                                 |
+|---------|------------------------------------------|---------------------------------------------|
+| GET     | /api/files/                              | Liste des fichiers                          |
+| POST    | /api/files/                              | Upload d'un fichier                         |
+| GET     | /api/files/{id}/                         | Détail d'un fichier                         |
+| PUT     | /api/files/{id}/                         | Modifier un fichier                         |
+| DELETE  | /api/files/{id}/                         | Supprimer un fichier                        |
+| POST    | /api/files/{id}/reprocess/               | Relancer le traitement                      |
+| GET     | /api/files/{id}/download/                | Télécharger le fichier                      |
+| GET     | /api/files/{id}/progress/                | Voir la progression du traitement           |
+| GET     | /api/files/statistics/                   | Statistiques globales fichiers              |
+| GET     | /api/strings/                            | Liste des chaînes                           |
+| POST    | /api/strings/                            | Créer une chaîne                            |
+| GET     | /api/strings/{id}/                       | Détail d'une chaîne                         |
+| PUT     | /api/strings/{id}/                       | Modifier une chaîne                         |
+| DELETE  | /api/strings/{id}/                       | Supprimer une chaîne                        |
+| GET     | /api/strings/by_file/?file_id={uuid}     | Chaînes d'un fichier                        |
+| GET     | /api/strings/statistics/                 | Statistiques globales chaînes               |
 
 ## Vue d'ensemble
 
@@ -78,7 +261,6 @@ Représente une chaîne de traduction individuelle.
 - `translated_text` : Texte traduit
 - `context` : Contexte/commentaire
 - `comment` : Commentaire additionnel
-- `is_translated` : Indique si la chaîne est traduite
 - `is_fuzzy` : Indique si la traduction est floue (pour les fichiers PO)
 - `is_plural` : Indique si c'est une forme plurielle
 

@@ -77,7 +77,8 @@ class TranslationFileDetailSerializer(serializers.ModelSerializer):
         return obj.strings.count()
 
     def get_translated_count(self, obj):
-        return obj.strings.filter(is_translated=True).count()
+        """Retourne le nombre de chaînes avec du texte traduit"""
+        return obj.strings.filter(translated_text__isnull=False).exclude(translated_text='').count()
 
 
     def get_translation_progress(self, obj):
@@ -172,7 +173,7 @@ class TranslationStringListSerializer(serializers.ModelSerializer):
         model = TranslationString
         fields = (
             'id', 'file', 'file_name', 'key', 'source_text', 'context',
-            'is_translated', 'is_fuzzy', 'is_plural', 'line_number',
+            'is_fuzzy', 'is_plural', 'line_number',
             'created_at', 'translations_count'
         )
 
@@ -189,4 +190,16 @@ class TranslationStringDetailSerializer(TranslationStringListSerializer):
         fields = TranslationStringListSerializer.Meta.fields + (
             'translations', 'file_details'
         )
+
+
+class TranslationStringSerializer(serializers.ModelSerializer):
+    """Serializer pour les chaînes de traduction"""
+    
+    class Meta:
+        model = TranslationString
+        fields = (
+            'id', 'key', 'source_text', 'context', 'comment',
+            'is_fuzzy', 'is_plural', 'line_number', 'created_at'
+        )
+        read_only_fields = ('id', 'created_at')
 

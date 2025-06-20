@@ -1,0 +1,85 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025 YOUR ORGANIZATION
+# This file is distributed under the same license as the Django project.
+# FIRST AUTHOR <you@example.com>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: MyDjangoApp 1.0\n"
+"Report-Msgid-Bugs-To: you@example.com\n"
+"POT-Creation-Date: 2025-06-18 12:00+0000\n"
+"PO-Revision-Date: 2025-06-18 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English <translation@example.com>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: ChatGPT Translation Suite\n"
+
+#. Translators: Title shown on the home page
+msgid "Welcome to our platform"
+msgstr ""
+
+#. Translators: Subtitle describing platform purpose
+msgid "Simplify your project management"
+msgstr ""
+
+#. Translators: Button text for logging in
+msgid "Login"
+msgstr ""
+
+#. Translators: Button text for logging out
+msgid "Logout"
+msgstr ""
+
+#. Translators: Button text for user registration
+msgid "Register"
+msgstr ""
+
+#. Translators: Label for the email input field
+msgid "Email address"
+msgstr ""
+
+#. Translators: Label for the password input field
+msgid "Password"
+msgstr ""
+
+#. Translators: Link text for password reset
+msgid "Forgot your password?"
+msgstr ""
+
+#. Translators: Welcome message on the dashboard
+msgid "Welcome back"
+msgstr ""
+
+#. Translators: Title of the statistics section
+msgid "Your statistics"
+msgstr ""
+
+#. Translators: Error message for 404
+msgid "Page not found"
+msgstr ""
+
+#. Translators: Error message for internal server error
+msgid "Internal server error"
+msgstr ""
+
+#. Translators: Label for saving a form
+msgid "Save"
+msgstr ""
+
+#. Translators: Label for canceling an action
+msgid "Cancel"
+msgstr ""
+
+#. Translators: Label for deleting an item
+msgid "Delete"
+msgstr ""
+
+#. Translators: Notification text for new messages
+msgid "You have a new message"
+msgstr ""
+

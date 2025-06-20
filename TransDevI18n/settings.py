@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_celery_beat',
     'rest_framework',
+    'django_filters',  # Pour les filtres avancés
     'adminTransdevi18n', # Application pour l'administration personnalisée
     'corsheaders',  # Pour gérer les CORS
     'accounts',  # Application pour la gestion des comptes utilisateurs
@@ -111,13 +112,13 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-
-
-    ##   'DEFAULT_RENDERER_CLASSES': (
-    ##       'rest_framework.renderers.JSONRenderer',
-    ##                               ),
-
-    
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'translations.pagination.StandardResultsSetPagination',
+    'PAGE_SIZE': 20,
 }
 
 

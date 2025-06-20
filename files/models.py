@@ -43,6 +43,10 @@ class TranslationFile(models.Model):
     encoding = models.CharField(max_length=50, default='utf-8')
     total_strings = models.IntegerField(default=0)
     
+    # Langue détectée automatiquement
+    detected_language = models.CharField(max_length=10, blank=True, help_text="Code de langue détectée automatiquement")
+    detected_language_confidence = models.FloatField(default=0.0, help_text="Confiance de la détection de langue")
+    
     def delete_temp_file(self):
         """Supprime le fichier physique"""
         if self.file_path and os.path.exists(self.file_path.path):
@@ -64,18 +68,14 @@ class TranslationString(models.Model):
     file = models.ForeignKey(TranslationFile, on_delete=models.CASCADE, related_name='strings')
     key = models.CharField(max_length=500)  # Clé de traduction
     source_text = models.TextField()  # Texte source
-    translated_text = models.TextField(blank=True)  # Texte traduit
     context = models.TextField(blank=True)  # Contexte/commentaire
     comment = models.TextField(blank=True)  # Commentaire additionnel
-    is_translated = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # Métadonnées pour certains formats
     line_number = models.IntegerField(blank=True, null=True)
     is_fuzzy = models.BooleanField(default=False)  # Pour les fichiers PO
     is_plural = models.BooleanField(default=False)
-    
-    
     
     def get_translations(self):
         """Retourne toutes les traductions de cette chaîne"""

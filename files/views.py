@@ -424,7 +424,7 @@ class TranslationStringViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = TranslationStringFilter
     search_fields = ['key', 'source_text', 'context']
-    ordering_fields = ['created_at', 'line_number', 'key', 'is_translated']
+    ordering_fields = ['created_at', 'line_number', 'key']
     ordering = ['line_number', 'key']
     pagination_class = TranslationStringPagination
 
@@ -571,12 +571,12 @@ class TranslationStringViewSet(viewsets.ModelViewSet):
             plural = 0
             
             try:
-                translated = queryset.filter(is_translated=True).count()
+                translated = queryset.filter(translations__isnull=False).distinct().count()
             except Exception as e:
                 logger.warning(f"Erreur lors du calcul des chaînes traduites: {e}")
             
             try:
-                untranslated = queryset.filter(is_translated=False).count()
+                untranslated = total_strings - translated
             except Exception as e:
                 logger.warning(f"Erreur lors du calcul des chaînes non traduites: {e}")
             
@@ -628,3 +628,19 @@ class TranslationStringViewSet(viewsets.ModelViewSet):
                 {'error': 'Erreur lors du calcul des statistiques'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    def get_translation_stats(self, request):
+        """Récupère les statistiques de traduction"""
+        queryset = self.get_queryset()
+        
+        # Statistiques générales
+        total_strings = queryset.count()
+        translated = queryset.filter(translations__isnull=False).distinct().count()
+        untranslated = total_strings - translated
+        
+        return Response({
+            'total_strings': total_strings,
+            'translated_strings': translated,
+            'untranslated_strings': untranslated,
+            'translation_rate': round((translated / total_strings * 100) if total_strings > 0 else 0, 2)
+        })
