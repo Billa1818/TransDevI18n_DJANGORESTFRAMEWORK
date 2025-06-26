@@ -1,6 +1,6 @@
 # TransDevI18n_DANGORESTFRAMEWORK
 ***EN PRODUCTION ***
-
+Plateforme de traduction I18n pour des dev (.mo .json)
 
 ## Support
 
